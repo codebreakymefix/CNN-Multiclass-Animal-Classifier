@@ -20,6 +20,8 @@ The asterisk means experiments.
 
 The objective of this endeavor is to classify photographs of animals utilizing a Convolutional Neural Network. This will be accomplished through the training of the neural network on the [Animals-10](https://www.kaggle.com/datasets/alessiocorrado99/animals10/data) dataset, which comprises 28,000 images depicting dogs, cats, horses, spiders, butterflies, chickens, sheep, cows, squirrels, and elephants of “medium size.” The biggest find was importance of proper data preprocessing more specifcally knowing the data you are working with to identify skews, data normalization can give you free accuracy, and how image tranformations are applied can drastically change your runtime.
 
+![png](README_files/modelarch.png)
+
 ## Related Works/Methods/Results
 
 So the paper is written by showcasing any related works at the beginning of the method, the method itself, and a discussion of the results.
