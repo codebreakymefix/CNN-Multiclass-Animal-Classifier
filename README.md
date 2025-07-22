@@ -1,3 +1,21 @@
+# Navigation
+
+The asterisk means experiments.
+
+* [Introduction](#intro)
+* [Data Preprocessing Part 1](#data1)
+* [Initial Architecture*](#architecture)
+* [Benchmark Model*](#bench)
+* [Learning Scheduler*](#learnsched)
+* [Data Augmentation with Scheduler*](#dataauglearnsched)
+* [Data Augmentation without Scheduler*](#dataaugnosched)
+* [Undersampling*](#undersamp)
+* [Increasing model size*](#modelsize)
+* [Explanation of Benchmark Scores](#exp)
+* [Conclusion](#conc)
+* [Citations](#cit)
+
+<a name='intro'></a>
 # Introduction/Abstract
 
 The objective of this endeavor is to classify photographs of animals utilizing a Convolutional Neural Network. This will be accomplished through the training of the neural network on the [Animals-10](https://www.kaggle.com/datasets/alessiocorrado99/animals10/data) dataset, which comprises 28,000 images depicting dogs, cats, horses, spiders, butterflies, chickens, sheep, cows, squirrels, and elephants of “medium size.” The biggest find was importance of proper data preprocessing more specifcally knowing the data you are working with to identify skews, data normalization can give you free accuracy, and how image tranformations are applied can drastically change your runtime.
@@ -82,6 +100,7 @@ print(f"Standard Deviation: {std}")
 
 Perfect now we can properly normalize our data its time to preprocess!
 
+<a name='data1'></a>
 ## Data Preprocessing Part 1
 
 The resolutions between the images are different. Papers like Yolov6 (1) apparently resize to 640x640. Older models like AlexNet (2) use 240x240. I initially tried 320x320, but it ended up maxing out our GPU RAM. I settled for 224 so we can have faster training time. Another reason is that we are not trying to identify species of animals, hence we don’t need that much detail. Second problem: normally we have a labels file, but this time the labels are the folder where the images are stored. Third, the labels are in Italian, so we need to translate them. Fourth, each image has a different resolution, so we are going to resize it in a way to maintain the aspect ratio but still be consistent with the rest of the images. Furthermore, we need to get the mean and std deviation so we can properly normalize all the data so it helps the model converge (find its minimum). Below you’re going to see commented code on how the data was preprocessed. The code was also optimized to run the transformations once to help with runtime. In addition, you're going to see the 60/20/20 split done by creating a custom data set function, doing the split, and then applying the tranformation. This way we can ensure when we get to data augmentation it is only applied to the train set.
@@ -277,8 +296,9 @@ H(P, Q) = -\sum_{i} p_i \log(q_i)
 $$
 
 
-Also after some reasearch ADAM seems to be the go to for this type of problem and its designed in a way for it to work best at its default learning rate. They worked well
+Also after some reasearch ADAM seems to be the go to for this type of problem and its designed in a way for it to work best at its default learning rate. They worked well.
 
+<a name='architecture'></a>
 # Initial Achitecture *
 
 
@@ -382,7 +402,7 @@ def load_checkpoint_test(model, path='checkpoint.pth'):
     model.load_state_dict(checkpoint['model_state_dict'])
     return model
 ```
-
+<a name = 'bench'></a>
 # Benchmark Model *
 
 
@@ -641,6 +661,7 @@ Figure 1: Benchmark Test Loss, precision, recall, F1 score and confusion matrix.
 
 Good base to start from lets start with Learning Scheduler.
 
+<a name='learnsched'></a>
 # Learning Scheduler *
 
 
@@ -931,8 +952,8 @@ f1_score.reset()
 Figure 2: OneCycleLR Test Loss, Precision, Recal, and F1 Score.
 
 So if we do some math, figure 1 took 2.3 min per epoch vs figure 2 which took 2.25 min per epoch. So we did get a slight improvement! I did forget to set the patience to 5 for figure 1 and 2 which wasted compute units. Also the confusion matrix shows we have a class wise performance variation by having a strong bias on classifying chicken properly. This might be because the data itself might have more pictures of chickens. So we are going to try some data augmentation because we also have an overfitting issue as seen in the train accuracy vs validation accuracy in later epochs.
-
-# Data Augmentation with scheduler *
+<a name='dataauglearnsched'></a>
+# Data Augmentation with Scheduler *
 
 So the idea here is to change the images in some way to help the model prepare for unseen data (val and test). For this experiment, we only change the train data set. We want to make sure we don’t augment our val and test set. Each augmented image will have augmentation **randomly** applied, so each picture has a different combination of augmentations. I also updated the preprocessing code to fix some bugs hence why its here.
 
@@ -1200,8 +1221,8 @@ Figure 3: Data augmentation with scheduler of all the training samples
 
 We changed our patience value, leading to lower epochs. We did get our lowest
 test accuracy yet. Our overfitting issue seems to be worse. The model with a learning scheduler at around epoch 40 had train and validation accuracy almost the same, while in this one, train was around 5% higher. We did see some oscillation in the training data, so let’s try to stabilize the learning with a constant learning rate.
-
-# Data Augmentation without scheduler *
+<a name='dataaugnosched'></a>
+# Data Augmentation without Scheduler *
 
 Data augmentation with scheduler saw some oscillations in the val accuracy, so having a constant learning rate in this experiment is an attempt to stabalize it.
 
@@ -1413,7 +1434,7 @@ f1_score.reset()
 Figure 4: Data augmentation of all the training samples
 
 Did not turn out as expected, lets finally try undersampling the chickens.
-
+<a name='undersamp'></a>
 # Undersampling *
 
 So a common trend I have seen in the confusion matrix throughout all of the experiments is the model overpredicting chickens. So let’s see the data itself and see how many samples of chickens there are.
@@ -1789,8 +1810,8 @@ f1_score.reset()
 Figure 5: Model with undersampling chicken and dogs.
 
 Best test scores and train time yet! Now its time to scale up.
-
-# Increasing the size of the model *
+<a name='modelsize'></a>
+# Increasing model size *
 
 
 ```python
@@ -2060,7 +2081,8 @@ Figure 6: Bigger undersampled model
 
 Got slightly higher accuracy, but otherwise not much of a difference. I think its either the model architecture or the data size that limiting us from getting better scores.
 
-# Explanations of benchmark scores
+<a name='exp'></a>
+# Explanation of Benchmark Scores
 
 Here is some of the math equations of the and explanations of what those scores what the results mean. Higher precision means less false positives. Higher recall less false negatives. F1 is a harmonic reading between precision and recall (higher the better). The confusion matrix tells you what exactly what the model predicting wrong or right.
 
@@ -2078,13 +2100,13 @@ $$
 *   FN is the number of false negatives.
 * FP is the number of false positives.
 
-
+<a name='conc'></a>
 # Conclusion
 
 In summary, the undersampled benchmark model showed the most promising performance. It had the best test accuracy, fastest training time, and the lowest test loss. If we take most of the results into consideration, they all hover around a test accuracy of 65% meaning we hit a limit somewhere. My hypothesis is either we hit the limits of the dataset or our model architeture needs to be updated. More specific, in the final layers were the conovlutional filters are flattened. The main points is the importance of proper data preparation, undersampling should of been caught closer to the beginning rather that the end.
 
+<a name='cit'></a>
 # Citations
-
 
 1. **YOLOv6**: Li, C., Li, L., Jiang, H., Weng, K., Geng, Y., Liang, L., Ke, Z., Li, Q., Cheng, M., Nie, W., Li, Y., Zhang, B., Liang, Y., Zhou, L., Xu, X., Chu, X., Wei, X., & Wei, X. (2022). YOLOv6: A Single-Stage Object Detection Framework for Industrial Applications. arXiv:2209.02976.
 
