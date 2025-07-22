@@ -286,6 +286,8 @@ VGG (3), ResNet (4), and DenseNet (5), (which are classification models) use a p
 
 Now that we have that understanding of receptive fields, we can delve deeper into the decisions that were made in our network. Let’s start with the CNN. We start small with n filters, but we gradually increase to n times 2 filters. Each layer just keeps multiplying n times 2 until we reach 8. This structure is meant to grab the simpler features like edges at the initial layers of the network and more complex features like shapes towards the last layers of the network. At the end, we have a dropout layer to help reduce overfitting. These are typically placed at the end to reduce too much dependence on broad features. We are using ReLU vs. leaky to reduce the number of hyperparameters so we can tune the model more effectively. Batch normalization is between each layer to help the model converge faster. Lastly, we have a max pooling layer to help extract the most important features (max pooling works like a convolution, but instead of multiplying and summing to make one element in a new matrix, it just grabs the highest value from the current position of the kernel). To decide the initial amount of filter (n), I experimented with different initial filter amounts. We started with 64 and 32, but it maxed out our GPU RAM in our A100. So we ended up with 16 as the initial filter amount.
 
+![png](README_files/modelarch.png)
+
 
 ```python
 filters = 16
